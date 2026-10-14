@@ -20,29 +20,22 @@ resource "aws_instance" "example" {
     timeout     = "5m"
   }
 
-  provisioner "remote-exec" {
-    inline = [
-      "set -e",
+ provisioner "remote-exec" {
+  inline = [
+    "set -e",
+    "sudo apt-get update -y",
+    "sudo apt-get install -y nginx git rsync",
+    "sudo systemctl enable --now nginx",
 
-      # Install required packages
-      "sudo apt-get update -y",
-      "sudo apt-get install -y nginx git rsync",
+    "if [ -d /home/ubuntu/portfolio/.git ]; then sudo git -C /home/ubuntu/portfolio fetch origin main && sudo git -C /home/ubuntu/portfolio reset --hard origin/main; else sudo git clone --branch main https://github.com/gudipudiankita/Portfolio-AWS.git /home/ubuntu/portfolio; fi",
 
-      # Clone the GitHub repository
-      "if [ -d /home/ubuntu/portfolio/.git ]; then sudo git -C /home/ubuntu/portfolio fetch origin main && sudo git -C /home/ubuntu/portfolio reset --hard origin/main; else sudo git clone --branch main https://github.com/gudipudiankita/Portfolio-AWS/tree/main/portfolio /home/ubuntu/portfolio; fi",
+    "sudo rsync -a --delete --exclude='.git' /home/ubuntu/portfolio/portfolio/ /var/www/html/",
 
-      # Sync GitHub files to the Nginx document root
-      "sudo rsync -a --delete --exclude='.git' /home/ubuntu/portfolio/ /var/www/html/",
-
-      # Set ownership and permissions
-      "sudo chown -R www-data:www-data /var/www/html",
-      "sudo find /var/www/html -type d -exec chmod 755 {} +",
-      "sudo find /var/www/html -type f -exec chmod 644 {} +",
-
-      # Start and validate Nginx
-      "sudo nginx -t",
-      "sudo systemctl enable --now nginx",
-      "sudo systemctl reload nginx"
-    ]
-  }
+    "sudo chown -R www-data:www-data /var/www/html",
+    "sudo find /var/www/html -type d -exec chmod 755 {} +",
+    "sudo find /var/www/html -type f -exec chmod 644 {} +",
+    "sudo nginx -t",
+    "sudo systemctl restart nginx"
+  ]
+}
 }
