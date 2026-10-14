@@ -30,11 +30,14 @@ resource "aws_subnet" "mysubnet2" {
 }
 
 
+
 terraform {
   backend "s3" {
     bucket       = "portndfg8387"
     key          = "portfolio/terraform.tfstate"
     region       = "ap-south-1"
-    
+    encrypt      = true
+    use_lockfile = true
   }
 }
+
